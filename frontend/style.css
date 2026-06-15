@@ -1,0 +1,239 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #white;
+    color: #333;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: #aabbcc;
+    color: white;
+    padding: 16px 24px;
+}
+header h1 {
+    font-size: 20px;
+}
+header p {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.stats {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+}
+.stat {
+    background: #f0f4f8;
+    padding: 12px 20px;
+    border-radius: 6px;
+    text-align: center;
+}
+.stat .num {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+.stat .lbl {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.filters {
+    padding: 12px 24px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.filters label {
+    font-size: 13px;
+    color: #555;
+}
+.filters select, .filters input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.filters button {
+    padding: 6px 14px;
+    background: #aabbcc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.content {
+    display: flex;
+    gap: 0;
+    height: calc(100vh - 180px);
+}
+
+.list {
+    width: 420px;
+    overflow-y: auto;
+    border-right: 1px solid #ddd;
+    background: white;
+}
+.list-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.list-item:hover {
+    background: #f8f9fa;
+}
+.list-item.active {
+    background: #eaf0fb;
+    border-left: 3px solid #3498db;
+}
+.list-item .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.list-item .cid {
+    font-weight: bold;
+    font-size: 14px;
+}
+.badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.badge.high {
+    background: #ffe0e0;
+    color: #c0392b;
+}
+.badge.med  {
+    background: #fff3cd;
+    color: #856404;
+}
+.badge.low  {
+    background: #d4edda;
+    color: #155724;
+}
+.list-item .sub {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.detail {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: #fafafa;
+}
+.detail h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #2c3e50;
+}
+
+.detail-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.detail-card h3 {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.risk-bar-wrap {
+ margin: 8px 0;
+}
+.risk-bar {
+    height: 12px;
+    background: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.risk-fill {
+ height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s;
+}
+
+.factors {
+ list-style: none;
+}
+.factors li {
+ padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.factors li:last-child {
+ border: none;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    flex-shrink: 0;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.action-row {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+}
+.action-row .name {
+    font-weight: bold;
+    font-size: 13px;
+}
+.action-row .meta {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+.action-row.best {
+    border-color: #27ae60;
+    background: #f0fff4;
+}
+.action-row.best .name::after {
+    content: " preporučeno";
+    font-size: 11px;
+    color: #27ae60;
+    font-weight: normal;
+}
+
+.placeholder {
+ color: #999;
+    text-align: center;
+    padding: 60px 24px;
+    font-size: 14px;
+}
+.loading {
+ text-align: center;
+    padding: 40px;
+    color: #888;
+}
