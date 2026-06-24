@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: churn_db
+      POSTGRES_USER: churn_user
+      POSTGRES_PASSWORD: churn_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./etl/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U churn_user -d churn_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://churn_user:churn_pass@postgres:5432/churn_db
+      USE_DB: "true"
+      DATA_PATH: data/raw/telco_churn.csv
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+
+  etl:
+    build: .
+    command: python etl/pipeline.py
+    environment:
+      DATABASE_URL: postgresql://churn_user:churn_pass@postgres:5432/churn_db
+      DATA_PATH: data/raw/telco_churn.csv
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    profiles:
+      - etl
+
+volumes:
+  pgdata:

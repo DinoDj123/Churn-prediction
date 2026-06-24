@@ -1,14 +1,153 @@
-const API = "http://localhost:8000";
+const API = window.location.origin;
+let contractChart = null;
 
-async function loadStats() {
-  const r = await fetch(`${API}/stats`);
-  const d = await r.json();
-  document.getElementById("stats").innerHTML = `
-    <div class="stat"><div class="num">${d.total}</div><div class="lbl">Korisnika</div></div>
-    <div class="stat"><div class="num">${d.high_risk}</div><div class="lbl">Visok rizik (&gt;70%)</div></div>
-    <div class="stat"><div class="num">${(d.avg_risk*100).toFixed(1)}%</div><div class="lbl">Prosječni rizik</div></div>
-    <div class="stat"><div class="num">$${d.total_expected_loss.toLocaleString()}</div><div class="lbl">Očekivani godišnji gubitak</div></div>
+function fmtMoney(n) {
+  return "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtPct(n) {
+  return Number(n || 0).toFixed(1) + "%";
+}
+
+function riskClass(risk) {
+  if (risk > 0.7) return "high";
+  if (risk > 0.4) return "med";
+  return "low";
+}
+
+function riskLabel(risk) {
+  if (risk > 0.7) return "Visok";
+  if (risk > 0.4) return "Srednji";
+  return "Nizak";
+}
+
+function renderKPIs(d) {
+  document.getElementById("kpiGrid").innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Ukupni mjesečni prihod</div>
+      <div class="kpi-value">${fmtMoney(d.total_monthly_revenue)}</div>
+      <div class="kpi-sub">Godišnje: ${fmtMoney(d.total_annual_revenue)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Churn rate</div>
+      <div class="kpi-value">${fmtPct(d.churn_rate)}</div>
+      <div class="kpi-sub">${d.total_customers} korisnika</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Rizični korisnici</div>
+      <div class="kpi-value">${d.at_risk_customers}</div>
+      <div class="kpi-sub">Rizik &gt; 70%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Predviđeni gubitak</div>
+      <div class="kpi-value">${fmtMoney(d.predicted_loss)}</div>
+      <div class="kpi-sub">Prosj. rizik: ${fmtPct(d.avg_risk * 100)}</div>
+    </div>
   `;
+}
+
+function renderContractChart(data) {
+  const ctx = document.getElementById("contractChart");
+  if (contractChart) contractChart.destroy();
+
+  contractChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map(d => d.contract),
+      datasets: [
+        { label: "Stvarni churn %", data: data.map(d => d.churn_rate), backgroundColor: "#c0392b" },
+        { label: "Predviđeni rizik %", data: data.map(d => d.avg_predicted_risk), backgroundColor: "#555" },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: { y: { ticks: { callback: v => v + "%" } } },
+    },
+  });
+}
+
+function renderTopRisk(data) {
+  if (!data.length) {
+    document.getElementById("topRiskTable").innerHTML = '<div class="loading">Nema podataka</div>';
+    return;
+  }
+
+  document.getElementById("topRiskTable").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Korisnik</th>
+          <th>Ugovor</th>
+          <th>Rizik</th>
+          <th>Gubitak</th>
+          <th>Akcija</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map((c, i) => `
+          <tr onclick="showDetail('${c.customerID}', null)">
+            <td class="rank">${i + 1}</td>
+            <td><strong>${c.customerID}</strong></td>
+            <td>${c.contract}</td>
+            <td><span class="badge ${riskClass(c.risk)}">${fmtPct(c.risk * 100)}</span></td>
+            <td class="loss-cell">${fmtMoney(c.expected_loss)}</td>
+            <td>${c.best_action}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+
+  renderRetentionSummary(data);
+}
+
+function renderRetentionSummary(topCustomers) {
+  const actionCounts = {};
+  topCustomers.forEach(c => {
+    actionCounts[c.best_action] = (actionCounts[c.best_action] || 0) + 1;
+  });
+  const totalRoi = topCustomers.reduce((s, c) => s + (c.best_roi || 0), 0);
+
+  document.getElementById("retentionSummary").innerHTML = `
+    <div class="retention-stat">
+      <div class="rs-value">${topCustomers.length}</div>
+      <div class="rs-label">Prioritetnih korisnika</div>
+    </div>
+    <div class="retention-stat">
+      <div class="rs-value">${fmtMoney(topCustomers.reduce((s, c) => s + c.expected_loss, 0))}</div>
+      <div class="rs-label">Ukupni rizik gubitka</div>
+    </div>
+    <div class="retention-stat">
+      <div class="rs-value">${fmtMoney(totalRoi)}</div>
+      <div class="rs-label">Potencijalni ROI</div>
+    </div>
+    <div class="retention-actions-list">
+      ${Object.entries(actionCounts).map(([action, count]) => `
+        <div class="retention-action-chip">
+          <span>${action}</span>
+          <span>${count} korisnika</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function loadKPIs() {
+  const r = await fetch(`${API}/dashboard/kpis`);
+  renderKPIs(await r.json());
+}
+
+async function loadContractChart() {
+  const r = await fetch(`${API}/dashboard/churn-by-contract`);
+  renderContractChart(await r.json());
+}
+
+async function loadTopRisk() {
+  const r = await fetch(`${API}/dashboard/top-risk?limit=10`);
+  renderTopRisk(await r.json());
 }
 
 async function loadCustomers() {
@@ -16,84 +155,83 @@ async function loadCustomers() {
   const contract = document.getElementById("contractFilter").value;
   const params = new URLSearchParams({ min_risk: minRisk, contract });
   const r = await fetch(`${API}/customers?${params}`);
-  const customers = await r.json();
+  const list = await r.json();
+  const el = document.getElementById("customerList");
 
-  const list = document.getElementById("customerList");
-  if (!customers.length) {
-    list.innerHTML = '<div class="loading">Nema rezultata</div>';
+  if (!list.length) {
+    el.innerHTML = '<div class="loading">Nema rezultata</div>';
     return;
   }
 
-  list.innerHTML = customers.map(c => {
+  el.innerHTML = list.map(c => {
     const pct = (c.risk * 100).toFixed(0);
-    const cls = c.risk > 0.7 ? "high" : c.risk > 0.4 ? "med" : "low";
-    const lbl = c.risk > 0.7 ? "Visok" : c.risk > 0.4 ? "Srednji" : "Nizak";
     return `
       <div class="list-item" onclick="showDetail('${c.customerID}', this)">
         <div class="top">
           <span class="cid">${c.customerID}</span>
-          <span class="badge ${cls}">${lbl} ${pct}%</span>
+          <span class="badge ${riskClass(c.risk)}">${riskLabel(c.risk)} ${pct}%</span>
         </div>
-        <div class="sub">Gubitak: $${c.expected_loss} · ${c.contract} · ${c.tenure} mj.</div>
+        <div class="sub">Gubitak: ${fmtMoney(c.expected_loss)} · ${c.contract} · ${c.tenure} mj.</div>
+        <div class="sub action-hint">${c.best_action}</div>
       </div>
     `;
   }).join("");
 }
 
 async function showDetail(id, el) {
-  document.querySelectorAll(".list-item").forEach(x => x.classList.remove("active"));
-  el.classList.add("active");
+  if (el) {
+    document.querySelectorAll(".list-item").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+  }
 
   const r = await fetch(`${API}/customers/${id}`);
   const c = await r.json();
+  if (c.error) return;
 
   const pct = (c.risk * 100).toFixed(1);
-  const color = c.risk > 0.7 ? "#e74c3c" : c.risk > 0.4 ? "#f39c12" : "#27ae60";
-
+  const color = c.risk > 0.7 ? "#c0392b" : c.risk > 0.4 ? "#b8860b" : "#2e7d32";
   const actions = Object.values(c.actions || {});
-  const bestRoi = Math.max(...actions.map(a => a.roi));
-
-  const actionsHtml = actions.map(a => `
-    <div class="action-row ${a.roi === bestRoi ? 'best' : ''}">
-      <div class="name">${a.label}</div>
-      <div class="meta">
-        Vjerovatnoća nakon: ${(a.new_prob*100).toFixed(1)}%
-        · Trošak: $${a.cost}
-        · ROI: <strong style="color:${a.roi>0?'#27ae60':'#e74c3c'}">$${a.roi}</strong>
-      </div>
-    </div>
-  `).join("");
-
-  const factors = (c.top_factors || []).map(f => `
-    <li><span class="dot"></span>${f.replace(/_/g, " ")}</li>
-  `).join("");
+  const bestRoi = Math.max(...actions.map(a => a.roi), 0);
 
   document.getElementById("detail").innerHTML = `
-    <h2>Korisnik: ${c.customerID}</h2>
-
+    <h2>${c.customerID}</h2>
     <div class="detail-card">
       <h3>Rizik od odlaska</h3>
-      <div style="font-size:28px;font-weight:bold;color:${color};margin-bottom:8px">${pct}%</div>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar"><div class="risk-fill" style="width:${pct}%;background:${color}"></div></div>
-      </div>
-      <p style="font-size:12px;color:#666;margin-top:8px">
-        Očekivani godišnji gubitak: <strong>$${c.expected_loss}</strong>
-        · Ugovor: ${c.contract} · Staž: ${c.tenure} mj. · Mjesečno: $${c.monthly}
+      <div class="risk-big" style="color:${color}">${pct}%</div>
+      <div class="risk-bar"><div class="risk-fill" style="width:${pct}%;background:${color}"></div></div>
+      <p class="detail-meta">
+        Predviđeni gubitak: <strong>${fmtMoney(c.expected_loss)}</strong>
+        · Ugovor: ${c.contract} · Staž: ${c.tenure} mj. · Mjesečno: ${fmtMoney(c.monthly)}
       </p>
     </div>
-
     <div class="detail-card">
-      <h3>Ključni faktori rizika</h3>
-      <ul class="factors">${factors}</ul>
+      <h3>Preporučena akcija</h3>
+      <div class="recommended-action">${c.best_action}</div>
+      <p class="detail-meta">Očekivani ROI: ${fmtMoney(c.best_roi)}</p>
     </div>
-
     <div class="detail-card">
-      <h3>Preporučene akcije</h3>
-      <div class="actions">${actionsHtml}</div>
+      <h3>Ostale opcije</h3>
+      <div class="actions">
+        ${actions.map(a => `
+          <div class="action-row ${a.roi === bestRoi ? 'best' : ''}">
+            <div class="name">${a.label}</div>
+            <div class="meta">
+              Vjerovatnoća nakon: ${(a.new_prob * 100).toFixed(1)}%
+              · Trošak: ${fmtMoney(a.cost)}
+              · ROI: ${fmtMoney(a.roi)}
+            </div>
+          </div>
+        `).join("")}
+      </div>
     </div>
   `;
 }
 
-loadStats();
-loadCustomers();
+function refreshAll() {
+  loadKPIs();
+  loadContractChart();
+  loadTopRisk();
+  loadCustomers();
+}
+
+refreshAll();

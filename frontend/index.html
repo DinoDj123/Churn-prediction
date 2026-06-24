@@ -2,40 +2,75 @@
 <html lang="bs">
 <head>
   <meta charset="UTF-8">
-  <title>Churn Prediction</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Churn Analytics</title>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-<header>
-  <h1>Churn Prediction</h1>
-  <p>Predviđanje odlaska korisnika i preporuke za zadržavanje</p>
+<header class="topbar">
+  <div>
+    <h1>Churn Analytics</h1>
+    <p>Predviđanje odlaska korisnika i preporuke za zadržavanje</p>
+  </div>
+  <button class="btn" onclick="refreshAll()">Osvježi</button>
 </header>
 
-<div class="stats" id="stats">
-  <div class="loading">Učitavanje...</div>
-</div>
+<main class="container">
 
-<div class="filters">
-  <label>Min. rizik:</label>
-  <input type="number" id="minRisk" value="0" min="0" max="1" step="0.1" style="width:70px">
-  <label>Ugovor:</label>
-  <select id="contractFilter">
-    <option value="">Svi</option>
-    <option value="Month-to-month">Mjesečni</option>
-    <option value="One year">Godišnji</option>
-    <option value="Two year">Dvogodišnji</option>
-  </select>
-  <button onclick="loadCustomers()">Filtriraj</button>
-</div>
+  <section class="kpi-grid" id="kpiGrid">
+    <div class="loading">Učitavanje...</div>
+  </section>
 
-<div class="content">
-  <div class="list" id="customerList"><div class="loading">Učitavanje...</div></div>
-  <div class="detail" id="detail">
-    <div class="placeholder">← Odaberi korisnika sa liste za detalje</div>
-  </div>
-</div>
+  <section class="charts-row">
+    <div class="card">
+      <h3>Churn po tipu ugovora</h3>
+      <div class="chart-wrap">
+        <canvas id="contractChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Top 10 korisnika po riziku</h3>
+      <div class="table-wrap" id="topRiskTable">
+        <div class="loading">Učitavanje...</div>
+      </div>
+    </div>
+  </section>
 
-<script src="main.js"></script>
+  <section class="card" id="retention">
+    <h3>Retention pregled (top 10)</h3>
+    <div class="retention-grid" id="retentionSummary">
+      <div class="loading">Učitavanje...</div>
+    </div>
+  </section>
+
+  <section class="card" id="customers">
+    <div class="card-header-row">
+      <h3>Korisnici</h3>
+      <div class="filters">
+        <label>Min. rizik:</label>
+        <input type="number" id="minRisk" value="0" min="0" max="1" step="0.1">
+        <label>Ugovor:</label>
+        <select id="contractFilter">
+          <option value="">Svi</option>
+          <option value="Month-to-month">Mjesečni</option>
+          <option value="One year">Godišnji</option>
+          <option value="Two year">Dvogodišnji</option>
+        </select>
+        <button class="btn btn-sm" onclick="loadCustomers()">Filtriraj</button>
+      </div>
+    </div>
+    <div class="customers-layout">
+      <div class="list" id="customerList"><div class="loading">Učitavanje...</div></div>
+      <div class="detail" id="detail">
+        <div class="placeholder">Odaberi korisnika sa liste.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="main.js?v=3"></script>
 </body>
 </html>
