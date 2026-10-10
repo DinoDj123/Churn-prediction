@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prijava · Churn Analytics</title>
+  <link rel="stylesheet" href="style.css?v=4">
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h1>Churn Analytics</h1>
+    <p>Predviđanje odlaska korisnika i preporuke za zadržavanje</p>
+  </div>
+</header>
+
+<main class="container auth-container">
+
+  <section class="card">
+    <h3>Prijava</h3>
+    <form id="loginForm" class="auth-form">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" name="email" autocomplete="email" required>
+      <label for="loginPassword">Lozinka</label>
+      <input type="password" id="loginPassword" name="password" autocomplete="current-password" required>
+      <button type="submit" class="btn">Prijavi se</button>
+      <div class="auth-msg" id="loginMsg" role="alert"></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h3>Registracija</h3>
+    <form id="registerForm" class="auth-form">
+      <label for="registerEmail">Email</label>
+      <input type="email" id="registerEmail" name="email" autocomplete="email" required>
+      <label for="registerPassword">Lozinka (najmanje 8 znakova)</label>
+      <input type="password" id="registerPassword" name="password" autocomplete="new-password"
+             minlength="8" required>
+      <button type="submit" class="btn">Registruj se</button>
+      <div class="auth-msg" id="registerMsg" role="alert"></div>
+    </form>
+  </section>
+
+</main>
+
+<script>
+async function postJSON(url, body) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function login(email, password) {
+  const r = await postJSON("/auth/login", { email, password });
+  if (r.ok) {
+    window.location.href = "/";
+    return true;
+  }
+  return false;
+}
+
+document.getElementById("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("loginMsg");
+  msg.textContent = "";
+  const ok = await login(
+    document.getElementById("loginEmail").value,
+    document.getElementById("loginPassword").value,
+  );
+  if (!ok) msg.textContent = "Pogrešan email ili lozinka.";
+});
+
+document.getElementById("registerForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("registerMsg");
+  msg.textContent = "";
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
+  const r = await postJSON("/auth/register", { email, password });
+  if (r.status === 201) {
+    if (!(await login(email, password))) msg.textContent = "Nalog je napravljen. Prijavite se.";
+  } else if (r.status === 409) {
+    msg.textContent = "Korisnik sa tim emailom već postoji.";
+  } else if (r.status === 422) {
+    msg.textContent = "Provjerite email i lozinku (najmanje 8 znakova).";
+  } else {
+    msg.textContent = "Registracija nije uspjela. Pokušajte ponovo.";
+  }
+});
+</script>
+</body>
+</html>

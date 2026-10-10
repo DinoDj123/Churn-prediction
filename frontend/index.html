@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Churn Analytics</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -14,7 +14,10 @@
     <h1>Churn Analytics</h1>
     <p>Predviđanje odlaska korisnika i preporuke za zadržavanje</p>
   </div>
-  <button class="btn" onclick="refreshAll()">Osvježi</button>
+  <div class="topbar-actions">
+    <button class="btn" onclick="refreshAll()">Osvježi</button>
+    <button class="btn" onclick="logout()">Odjava</button>
+  </div>
 </header>
 
 <main class="container">
@@ -71,6 +74,6 @@
 
 </main>
 
-<script src="main.js?v=3"></script>
+<script src="main.js?v=4"></script>
 </body>
 </html>

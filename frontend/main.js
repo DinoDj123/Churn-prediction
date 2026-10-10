@@ -1,6 +1,20 @@
 const API = window.location.origin;
 let contractChart = null;
 
+async function apiFetch(path, options) {
+  const r = await fetch(`${API}${path}`, options);
+  if (r.status === 401) {
+    window.location.href = "/login.html";
+    throw new Error("Potrebna je prijava");
+  }
+  return r;
+}
+
+async function logout() {
+  await fetch(`${API}/auth/logout`, { method: "POST" });
+  window.location.href = "/login.html";
+}
+
 function fmtMoney(n) {
   return "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
@@ -136,17 +150,17 @@ function renderRetentionSummary(topCustomers) {
 }
 
 async function loadKPIs() {
-  const r = await fetch(`${API}/dashboard/kpis`);
+  const r = await apiFetch(`/dashboard/kpis`);
   renderKPIs(await r.json());
 }
 
 async function loadContractChart() {
-  const r = await fetch(`${API}/dashboard/churn-by-contract`);
+  const r = await apiFetch(`/dashboard/churn-by-contract`);
   renderContractChart(await r.json());
 }
 
 async function loadTopRisk() {
-  const r = await fetch(`${API}/dashboard/top-risk?limit=10`);
+  const r = await apiFetch(`/dashboard/top-risk?limit=10`);
   renderTopRisk(await r.json());
 }
 
@@ -154,7 +168,7 @@ async function loadCustomers() {
   const minRisk = document.getElementById("minRisk").value;
   const contract = document.getElementById("contractFilter").value;
   const params = new URLSearchParams({ min_risk: minRisk, contract });
-  const r = await fetch(`${API}/customers?${params}`);
+  const r = await apiFetch(`/customers?${params}`);
   const list = await r.json();
   const el = document.getElementById("customerList");
 
@@ -184,7 +198,7 @@ async function showDetail(id, el) {
     el.classList.add("active");
   }
 
-  const r = await fetch(`${API}/customers/${id}`);
+  const r = await apiFetch(`/customers/${id}`);
   const c = await r.json();
   if (c.error) return;
 

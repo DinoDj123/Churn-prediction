@@ -344,3 +344,28 @@ tbody tr:hover { background: #fafafa; cursor: pointer; }
   .customers-layout { flex-direction: column; }
   .list { width: 100%; max-height: 240px; border-right: none; border-bottom: 1px solid var(--border); }
 }
+
+.topbar-actions { display: flex; gap: 8px; }
+
+.auth-container {
+  max-width: 420px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-form label { font-size: 12px; color: var(--muted); }
+
+.auth-form input {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.auth-form .btn { margin-top: 8px; }
+
+.auth-msg { font-size: 12px; color: var(--danger); min-height: 16px; }

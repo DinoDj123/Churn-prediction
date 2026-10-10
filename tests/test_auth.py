@@ -1,30 +1,8 @@
-import os
 import sqlite3
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
-
-os.environ["USE_DB"] = "false"
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
-
-from fastapi.testclient import TestClient  # noqa: E402
-
-from app import app  # noqa: E402
-from tests import fixtures_auth  # noqa: E402
-
-ANA = fixtures_auth.ANA
-logged_in_client = fixtures_auth.logged_in_client
-
-
-@pytest.fixture
-def client(tmp_path, monkeypatch):
-    monkeypatch.setenv("USE_DB", "false")
-    monkeypatch.setenv("USERS_DB_PATH", str(tmp_path / "users.db"))
-    monkeypatch.chdir(ROOT)
-    with TestClient(app) as c:
-        yield c
+from tests.conftest import ANA
 
 
 # Scenarij: Nova korisnica
@@ -131,3 +109,75 @@ def test_odjava_brise_sesiju(logged_in_client):
     r = logged_in_client.post("/auth/logout")
     assert r.status_code == 200
     assert logged_in_client.get("/auth/me").status_code == 401
+
+
+# Scenarij: Prijava i dashboard (zaštita API-ja)
+
+PROTECTED = [
+    "/dashboard/kpis",
+    "/dashboard/churn-by-contract",
+    "/dashboard/top-risk",
+    "/customers",
+    "/customers/5419-JPRRN",
+]
+
+
+@pytest.mark.parametrize("path", PROTECTED)
+def test_api_bez_prijave_401(client, path):
+    assert client.get(path).status_code == 401
+
+
+def test_dashboard_poslije_prijave(client):
+    assert client.get("/dashboard/kpis").status_code == 401
+    client.post("/auth/register", json=ANA)
+    assert client.post("/auth/login", json=ANA).status_code == 200
+    r = client.get("/dashboard/kpis")
+    assert r.status_code == 200
+    assert r.json()["total_customers"] == 7043
+    me = client.get("/auth/me")
+    assert me.status_code == 200
+    assert me.json() == {"email": "ana@test.me"}
+
+
+@pytest.mark.parametrize("path", PROTECTED)
+def test_api_poslije_prijave_200(logged_in_client, path):
+    assert logged_in_client.get(path).status_code == 200
+
+
+def test_pogresna_lozinka_ne_otvara_dashboard(client):
+    client.post("/auth/register", json=ANA)
+    client.post("/auth/login", json={"email": "ana@test.me", "password": "pogresna1"})
+    assert client.get("/dashboard/kpis").status_code == 401
+
+
+def test_odjava_zatvara_dashboard(logged_in_client):
+    assert logged_in_client.get("/dashboard/kpis").status_code == 200
+    assert logged_in_client.post("/auth/logout").status_code == 200
+    assert logged_in_client.get("/dashboard/kpis").status_code == 401
+
+
+# Scenarij: Stranica za prijavu
+
+def test_pocetna_bez_prijave_preusmjerava_na_login(client):
+    r = client.get("/", follow_redirects=False)
+    assert r.status_code in (302, 303, 307)
+    assert r.headers["location"] == "/login.html"
+
+
+def test_login_stranica_dostupna_bez_prijave(client):
+    r = client.get("/login.html")
+    assert r.status_code == 200
+    assert "Prijava" in r.text
+    assert 'id="loginForm"' in r.text
+
+
+def test_staticki_fajlovi_dostupni_bez_prijave(client):
+    assert client.get("/style.css").status_code == 200
+    assert client.get("/main.js").status_code == 200
+
+
+def test_pocetna_poslije_prijave_vraca_dashboard(logged_in_client):
+    r = logged_in_client.get("/", follow_redirects=False)
+    assert r.status_code == 200
+    assert "Churn Analytics" in r.text
+    assert "Odjava" in r.text

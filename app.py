@@ -5,12 +5,13 @@ import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from auth.routes import require_user
 from auth.routes import router as auth_router
 
 load_dotenv()
@@ -86,11 +87,13 @@ def load():
 
 
 @app.get("/")
-def index():
+def index(request: Request):
+    if not request.session.get("email"):
+        return RedirectResponse("/login.html", status_code=303)
     return FileResponse("frontend/index.html")
 
 
-@app.get("/dashboard/kpis")
+@app.get("/dashboard/kpis", dependencies=[Depends(require_user)])
 def dashboard_kpis():
     if _use_database():
         from etl.database import fetch_kpis
@@ -102,7 +105,7 @@ def dashboard_kpis():
     return _fallback_kpis()
 
 
-@app.get("/dashboard/churn-by-contract")
+@app.get("/dashboard/churn-by-contract", dependencies=[Depends(require_user)])
 def dashboard_churn_contract():
     if _use_database():
         from etl.database import fetch_churn_by_contract
@@ -112,7 +115,7 @@ def dashboard_churn_contract():
     return _fallback_churn_by_contract()
 
 
-@app.get("/dashboard/top-risk")
+@app.get("/dashboard/top-risk", dependencies=[Depends(require_user)])
 def dashboard_top_risk(limit: int = 10):
     if _use_database():
         from etl.database import fetch_top_risk
@@ -121,7 +124,7 @@ def dashboard_top_risk(limit: int = 10):
     return sorted_c[:limit]
 
 
-@app.get("/customers")
+@app.get("/customers", dependencies=[Depends(require_user)])
 def get_customers(min_risk: float = 0.0, contract: str = ""):
     if _use_database():
         from etl.database import fetch_customers
@@ -134,7 +137,7 @@ def get_customers(min_risk: float = 0.0, contract: str = ""):
     return result[:100]
 
 
-@app.get("/customers/{customer_id}")
+@app.get("/customers/{customer_id}", dependencies=[Depends(require_user)])
 def get_customer(customer_id: str):
     if _use_database():
         from etl.database import fetch_customer_detail
