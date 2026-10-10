@@ -18,3 +18,5 @@ data/processed/
 *.log
 
 pgdata/
+
+data/users.db
