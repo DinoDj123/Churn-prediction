@@ -164,20 +164,41 @@ async function loadTopRisk() {
   renderTopRisk(await r.json());
 }
 
+const PAGE_SIZE = 10;
+let customerRows = [];
+let customerPage = 1;
+
 async function loadCustomers() {
   const minRisk = document.getElementById("minRisk").value;
   const contract = document.getElementById("contractFilter").value;
   const params = new URLSearchParams({ min_risk: minRisk, contract });
   const r = await apiFetch(`/customers?${params}`);
-  const list = await r.json();
-  const el = document.getElementById("customerList");
+  customerRows = await r.json();
+  customerPage = 1;
+  renderCustomerPage();
+}
 
-  if (!list.length) {
+function goToCustomerPage(page) {
+  const pages = Math.max(1, Math.ceil(customerRows.length / PAGE_SIZE));
+  customerPage = Math.min(Math.max(page, 1), pages);
+  renderCustomerPage();
+}
+
+function renderCustomerPage() {
+  const el = document.getElementById("customerList");
+  const pager = document.getElementById("customerPager");
+
+  if (!customerRows.length) {
     el.innerHTML = '<div class="loading">Nema rezultata</div>';
+    pager.innerHTML = "";
     return;
   }
 
-  el.innerHTML = list.map(c => {
+  const pages = Math.ceil(customerRows.length / PAGE_SIZE);
+  const start = (customerPage - 1) * PAGE_SIZE;
+  const rows = customerRows.slice(start, start + PAGE_SIZE);
+
+  el.innerHTML = rows.map(c => {
     const pct = (c.risk * 100).toFixed(0);
     return `
       <div class="list-item" onclick="showDetail('${c.customerID}', this)">
@@ -190,6 +211,15 @@ async function loadCustomers() {
       </div>
     `;
   }).join("");
+  el.scrollTop = 0;
+
+  pager.innerHTML = `
+    <button class="btn btn-sm" onclick="goToCustomerPage(${customerPage - 1})"
+            ${customerPage === 1 ? "disabled" : ""}>‹ Prethodna</button>
+    <span class="pager-info">Strana ${customerPage} od ${pages}</span>
+    <button class="btn btn-sm" onclick="goToCustomerPage(${customerPage + 1})"
+            ${customerPage === pages ? "disabled" : ""}>Sljedeća ›</button>
+  `;
 }
 
 async function showDetail(id, el) {

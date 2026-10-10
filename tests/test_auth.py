@@ -189,3 +189,4 @@ def test_pocetna_poslije_prijave_vraca_dashboard(logged_in_client):
     assert r.status_code == 200
     assert "Churn Analytics" in r.text
     assert "Odjava" in r.text
+

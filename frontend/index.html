@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Churn Analytics</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -65,7 +65,10 @@
       </div>
     </div>
     <div class="customers-layout">
-      <div class="list" id="customerList"><div class="loading">Učitavanje...</div></div>
+      <div class="list-column">
+        <div class="list" id="customerList"><div class="loading">Učitavanje...</div></div>
+        <div class="pager" id="customerPager"></div>
+      </div>
       <div class="detail" id="detail">
         <div class="placeholder">Odaberi korisnika sa liste.</div>
       </div>
@@ -74,6 +77,6 @@
 
 </main>
 
-<script src="main.js?v=4"></script>
+<script src="main.js?v=5"></script>
 </body>
 </html>

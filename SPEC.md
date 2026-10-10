@@ -42,6 +42,12 @@ vidi podatke o klijentima, da bi aplikacija mogla da se objavi na internetu.
 - Na `/login.html` vidljiva je samo forma za prijavu; link "Registruj se" je zamjenjuje formom
   za registraciju, a link "Prijavi se" vraća prijavu. Obje forme nikad nisu vidljive istovremeno.
 
+### Paginacija liste korisnika
+- Prijavljen korisnik na dashboardu vidi listu korisnika po 10 na strani, sa dugmadima
+  "Prethodna" i "Sljedeća" i natpisom "Strana 1 od 10" (za 100 korisnika iz `/customers`)
+- Promjena strane ne mijenja URL i ne šalje novi zahtjev; filter vraća na prvu stranu
+- Klik na korisnika i dalje otvara njegov detalj
+
 ## Odluke
 
 - Korisnici u SQLite (`sqlite3` iz standardne biblioteke), putanja iz `USERS_DB_PATH`
