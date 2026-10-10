@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -7,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from auth.routes import router as auth_router
 
@@ -19,6 +22,20 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = secrets.token_urlsafe(32)
+    logging.getLogger(__name__).warning(
+        "SECRET_KEY nije postavljen; koristi se nasumičan ključ i sesije neće preživjeti restart"
+    )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SECRET_KEY,
+    same_site="lax",
+    https_only=os.getenv("SESSION_HTTPS_ONLY", "false").lower() == "true",
 )
 
 app.include_router(auth_router)

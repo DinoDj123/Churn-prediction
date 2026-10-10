@@ -12,8 +12,10 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app import app  # noqa: E402
+from tests import fixtures_auth  # noqa: E402
 
-ANA = {"email": "ana@test.me", "password": "Lozinka123"}
+ANA = fixtures_auth.ANA
+logged_in_client = fixtures_auth.logged_in_client
 
 
 @pytest.fixture
@@ -76,3 +78,56 @@ def test_lozinka_se_cuva_kao_hash_sa_solju(client, tmp_path):
     # ista lozinka, različita so → različit hash
     hashes = {row[-1] for row in rows}
     assert len(hashes) == 2
+
+
+# Scenarij: Prijava i dashboard
+
+def test_prijava_daje_httponly_sesiju(client):
+    client.post("/auth/register", json=ANA)
+    r = client.post("/auth/login", json=ANA)
+    assert r.status_code == 200
+    cookie = r.headers["set-cookie"].lower()
+    assert cookie.startswith("session=")
+    assert "httponly" in cookie
+    assert "samesite=lax" in cookie
+
+
+def test_me_poslije_prijave(logged_in_client):
+    r = logged_in_client.get("/auth/me")
+    assert r.status_code == 200
+    assert r.json() == {"email": "ana@test.me"}
+
+
+def test_me_bez_prijave_401(client):
+    assert client.get("/auth/me").status_code == 401
+
+
+def test_pogresna_lozinka_401_bez_sesije(client):
+    client.post("/auth/register", json=ANA)
+    r = client.post("/auth/login", json={"email": "ana@test.me", "password": "pogresna1"})
+    assert r.status_code == 401
+    assert "set-cookie" not in r.headers
+    assert client.get("/auth/me").status_code == 401
+
+
+def test_nepostojeci_email_ista_poruka_kao_pogresna_lozinka(client):
+    client.post("/auth/register", json=ANA)
+    wrong_pw = client.post("/auth/login", json={"email": "ana@test.me", "password": "pogresna1"})
+    no_user = client.post("/auth/login", json={"email": "niko@test.me", "password": "Lozinka123"})
+    assert no_user.status_code == 401
+    assert "set-cookie" not in no_user.headers
+    assert no_user.json() == wrong_pw.json()
+
+
+def test_prijava_ne_zavisi_od_velikih_slova_u_emailu(client):
+    client.post("/auth/register", json=ANA)
+    r = client.post("/auth/login", json={"email": "Ana@Test.me", "password": "Lozinka123"})
+    assert r.status_code == 200
+
+
+# Scenarij: Odjava
+
+def test_odjava_brise_sesiju(logged_in_client):
+    r = logged_in_client.post("/auth/logout")
+    assert r.status_code == 200
+    assert logged_in_client.get("/auth/me").status_code == 401
