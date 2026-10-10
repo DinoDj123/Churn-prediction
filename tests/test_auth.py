@@ -171,6 +171,14 @@ def test_login_stranica_dostupna_bez_prijave(client):
     assert 'id="loginForm"' in r.text
 
 
+def test_login_stranica_prikazuje_jednu_formu(client):
+    html = client.get("/login.html").text
+    assert '<section class="card" id="loginCard">' in html
+    assert '<section class="card" id="registerCard" hidden>' in html
+    assert 'id="showRegister"' in html
+    assert 'id="showLogin"' in html
+
+
 def test_staticki_fajlovi_dostupni_bez_prijave(client):
     assert client.get("/style.css").status_code == 200
     assert client.get("/main.js").status_code == 200

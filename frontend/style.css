@@ -369,3 +369,7 @@ tbody tr:hover { background: #fafafa; cursor: pointer; }
 .auth-form .btn { margin-top: 8px; }
 
 .auth-msg { font-size: 12px; color: var(--danger); min-height: 16px; }
+
+.auth-switch { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; }
+.auth-switch a { color: var(--accent); }
+[hidden] { display: none !important; }

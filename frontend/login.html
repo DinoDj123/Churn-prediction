@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prijava · Churn Analytics</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
 
 <main class="container auth-container">
 
-  <section class="card">
+  <section class="card" id="loginCard">
     <h3>Prijava</h3>
     <form id="loginForm" class="auth-form">
       <label for="loginEmail">Email</label>
@@ -27,9 +27,10 @@
       <button type="submit" class="btn">Prijavi se</button>
       <div class="auth-msg" id="loginMsg" role="alert"></div>
     </form>
+    <p class="auth-switch">Nemaš nalog? <a href="#" id="showRegister">Registruj se</a></p>
   </section>
 
-  <section class="card">
+  <section class="card" id="registerCard" hidden>
     <h3>Registracija</h3>
     <form id="registerForm" class="auth-form">
       <label for="registerEmail">Email</label>
@@ -40,11 +41,31 @@
       <button type="submit" class="btn">Registruj se</button>
       <div class="auth-msg" id="registerMsg" role="alert"></div>
     </form>
+    <p class="auth-switch">Već imaš nalog? <a href="#" id="showLogin">Prijavi se</a></p>
   </section>
 
 </main>
 
 <script>
+function showForm(name) {
+  const register = name === "register";
+  document.getElementById("loginCard").hidden = register;
+  document.getElementById("registerCard").hidden = !register;
+  document.getElementById("loginMsg").textContent = "";
+  document.getElementById("registerMsg").textContent = "";
+  document.getElementById(register ? "registerEmail" : "loginEmail").focus();
+}
+
+document.getElementById("showRegister").addEventListener("click", e => {
+  e.preventDefault();
+  showForm("register");
+});
+
+document.getElementById("showLogin").addEventListener("click", e => {
+  e.preventDefault();
+  showForm("login");
+});
+
 async function postJSON(url, body) {
   return fetch(url, {
     method: "POST",

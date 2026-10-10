@@ -39,6 +39,8 @@ vidi podatke o klijentima, da bi aplikacija mogla da se objavi na internetu.
 ### Stranica za prijavu
 - Neprijavljen `GET /` → preusmjerenje na `/login.html`
 - `GET /login.html` → 200 bez prijave
+- Na `/login.html` vidljiva je samo forma za prijavu; link "Registruj se" je zamjenjuje formom
+  za registraciju, a link "Prijavi se" vraća prijavu. Obje forme nikad nisu vidljive istovremeno.
 
 ## Odluke
 
