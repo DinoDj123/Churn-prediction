@@ -125,8 +125,8 @@ CSV podaci  →  ETL pipeline  →  ML model  →  PostgreSQL / JSON  →  Web d
 ### 1. Kloniraj repozitorijum
 
 ```bash
-git clone https://github.com/TVOJ_USERNAME/churn-analytics.git
-cd churn-analytics
+git clone https://github.com/DinoDj123/Churn-prediction.git
+cd Churn-prediction
 ```
 
 ### 2. Virtualno okruženje i zavisnosti
@@ -187,6 +187,26 @@ Podaci se čuvaju u `data/processed/model_results.json`.
 
 ---
 
+## Objava na internet (Render)
+
+Aplikacija se može besplatno objaviti na [Render](https://render.com) kao Python web servis, bez Dockera i bez
+PostgreSQL-a (`USE_DB=false`, podaci iz `data/processed/model_results.json`). Sva podešavanja su u `render.yaml`.
+
+1. Pošalji projekat na GitHub (`git push`)
+2. Na Renderu otvori **New → Blueprint**
+3. Izaberi repozitorijum `Churn-prediction`
+4. Render pročita `render.yaml`, napravi servis i sam generiše `SECRET_KEY`
+5. Kad build završi, otvori adresu servisa (`https://<ime-servisa>.onrender.com`) i registruj se
+
+**Ograničenja besplatnog plana:**
+
+- Servis se uspava poslije ~15 minuta bez posjeta, pa prvo otvaranje nakon toga traje oko minut
+- Korisnici su u SQLite fajlu (`data/users.db`) koji se briše pri svakom redeployu ili restartu servisa, pa se
+  korisnici tada moraju ponovo registrovati
+- Sljedeći korak: korisnike čuvati u besplatnoj PostgreSQL bazi (npr. Neon)
+
+---
+
 ## Varijable okruženja
 
 Kopiraj `.env.example` u `.env` i prilagodi po potrebi:
@@ -197,6 +217,9 @@ Kopiraj `.env.example` u `.env` i prilagodi po potrebi:
 | `USE_DB`       | `true` / `false` / `auto`      | `auto`                     |
 | `SKIP_DB`      | Preskoči upis u bazu pri ETL-u | `false`                    |
 | `DATA_PATH`    | Putanja do CSV fajla           | `data/raw/telco_churn.csv` |
+| `SECRET_KEY`   | Ključ za potpisivanje sesije   | — (obavezno postaviti)     |
+| `SESSION_HTTPS_ONLY` | Kolačić sesije samo preko HTTPS (`true` u produkciji) | `false` |
+| `USERS_DB_PATH` | Putanja do SQLite baze korisnika | `data/users.db`          |
 
 ---
 

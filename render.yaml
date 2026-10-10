@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: churn-analytics
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /login.html
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: USE_DB
+        value: "false"
+      - key: SESSION_HTTPS_ONLY
+        value: "true"
+      - key: USERS_DB_PATH
+        value: data/users.db
+      - key: SECRET_KEY
+        generateValue: true
